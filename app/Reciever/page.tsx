@@ -6,10 +6,10 @@ const wsRef  = useRef<WebSocket|null>(null);
  const rtcRef = useRef<RTCPeerConnection|null>(null);
   const remoteVideoRef = useRef<HTMLVideoElement|null>(null);
    useEffect(()=>{
-     wsRef.current = new WebSocket('ws://192.168.1.6:8080')
+     wsRef.current = new WebSocket('ws://localhost:8080')
      rtcRef.current = new RTCPeerConnection();
      rtcRef.current.onicecandidate = (event) => {if (event.candidate) {
-                wsRef.current?.send(JSON.stringify({ Type: 'iceCandidate', candidate: event.candidate }));
+                wsRef.current?.send(JSON.stringify({ Type: 'iceCandidate', Candidate: event.candidate }));
             }}
  wsRef.current.onopen= () =>{
    wsRef.current?.send(JSON.stringify({Type : 'reciever'}));
@@ -18,26 +18,38 @@ const wsRef  = useRef<WebSocket|null>(null);
   console.log(event.data)
   const message = JSON.parse(event.data);
   if(message.Type === 'createOffer'){
-    rtcRef.current?.setRemoteDescription(message.sdp);
+    rtcRef.current?.setRemoteDescription(message.Candidate);
     const answer = await rtcRef.current?.createAnswer();
     rtcRef.current?.setLocalDescription(answer);
-    wsRef.current?.send(JSON.stringify({Type :'createAnswer',sdp:answer}));
+    wsRef.current?.send(JSON.stringify({Type :'createAnswer',Candidate:answer}));
   }
   else if(message.Type === 'iceCandidate'){
-    rtcRef.current?.addIceCandidate(new RTCIceCandidate(message.candidate));
+    rtcRef.current?.addIceCandidate(new RTCIceCandidate(message.Candidate));
   }
 
  }
- rtcRef.current.ontrack = (event) =>{
-if (remoteVideoRef.current) {
-  console.log("TRACK DETECTED")
-  console.log(event);
-   const [remoteStream] = event.streams;
-    remoteVideoRef.current.srcObject = remoteStream
-    const v = remoteVideoRef.current as HTMLVideoElement;
-    v.muted = true; // or keep it muted in JSX for autoplay
-}
- }
+//  rtcRef.current.ontrack = (event) =>{
+// if (remoteVideoRef.current) {
+//   console.log("TRACK DETECTED")
+//   console.log(event);
+//    const [remoteStream] = event.streams;
+//     remoteVideoRef.current.srcObject = remoteStream
+//     const v = remoteVideoRef.current as HTMLVideoElement;
+//     v.muted = true; // or keep it muted in JSX for autoplay
+// }
+//  }
+  rtcRef.current.ondatachannel = (event) => {
+    const receiveChannel = event.channel;
+    receiveChannel.onmessage = (e) => {
+        console.log("Received Message:", e.data);
+    };
+    receiveChannel.onopen = () => {
+        console.log("Data channel is open");    
+  };    
+    receiveChannel.onclose = () => {
+        console.log("Data channel is closed");
+    };
+  }
  return(()=>{wsRef.current?.close();
     rtcRef.current?.close();
  });
