@@ -9,21 +9,21 @@ const wsRef  = useRef<WebSocket|null>(null);
      wsRef.current = new WebSocket('ws://192.168.1.6:8080')
      rtcRef.current = new RTCPeerConnection();
      rtcRef.current.onicecandidate = (event) => {if (event.candidate) {
-                wsRef.current?.send(JSON.stringify({ type: 'iceCandidate', candidate: event.candidate }));
+                wsRef.current?.send(JSON.stringify({ Type: 'iceCandidate', candidate: event.candidate }));
             }}
  wsRef.current.onopen= () =>{
-   wsRef.current?.send(JSON.stringify({type : 'reciever'}));
+   wsRef.current?.send(JSON.stringify({Type : 'reciever'}));
  };
  wsRef.current.onmessage = async (event:any) =>{
   console.log(event.data)
   const message = JSON.parse(event.data);
-  if(message.type === 'createOffer'){
+  if(message.Type === 'createOffer'){
     rtcRef.current?.setRemoteDescription(message.sdp);
     const answer = await rtcRef.current?.createAnswer();
     rtcRef.current?.setLocalDescription(answer);
-    wsRef.current?.send(JSON.stringify({type :'createAnswer',sdp:answer}));
+    wsRef.current?.send(JSON.stringify({Type :'createAnswer',sdp:answer}));
   }
-  else if(message.type === 'iceCandidate'){
+  else if(message.Type === 'iceCandidate'){
     rtcRef.current?.addIceCandidate(new RTCIceCandidate(message.candidate));
   }
 

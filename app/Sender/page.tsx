@@ -10,15 +10,15 @@ export default function Sender() {
      wsRef.current = new WebSocket('ws://192.168.1.6:8080')
  
  wsRef.current.onopen= () =>{
-   wsRef.current?.send(JSON.stringify({type : 'sender'}));
+   wsRef.current?.send(JSON.stringify({Type : 'sender'}));
  };
  wsRef.current.onmessage = (event:any) =>{
   const message = JSON.parse(event.data);
-  if(message.type === 'createAnswer'){
+  if(message.Type === 'createAnswer'){
     console.log("Got answer");
     rtcRef.current?.setRemoteDescription(message.sdp);
   }
-  else if(message.type === 'iceCandidate'){
+  else if(message.Type === 'iceCandidate'){
     rtcRef.current?.addIceCandidate(new RTCIceCandidate(message.candidate));
   }
 
@@ -36,12 +36,12 @@ async function initconnection(){
   pc.onnegotiationneeded = async () =>{
  const offer = await pc.createOffer();
   pc.setLocalDescription(offer);
-  ws?.send(JSON.stringify({type :'createOffer', sdp : offer})); 
+  ws?.send(JSON.stringify({Type :'createOffer', sdp : offer})); 
   }
 
    pc.onicecandidate = (event)=>{
         if(event.candidate){
-          ws?.send(JSON.stringify({type:'iceCandidate', candidate:event.candidate}));
+          ws?.send(JSON.stringify({Type:'iceCandidate', candidate:event.candidate}));
         }
       }
  await startMedia();
